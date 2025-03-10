@@ -64,28 +64,20 @@ def load():
     cursor.execute("DELETE FROM customers")
     
     if len(data_tables) > 1:
-        base_table = data_tables[0]
+        query = "INSERT INTO customers\n"
+        query += "SELECT * FROM (\n"
         
-        query = f"""
-        INSERT INTO customers
-        SELECT DISTINCT t1.*
-        FROM {base_table} t1
-        """
+        # Construire la requête UNION ALL
+        union_queries = []
+        for table in data_tables:
+            union_queries.append(f"SELECT * FROM {table}")
         
-        for i, table in enumerate(data_tables[1:], 2):
-            query += f"""
-            FULL OUTER JOIN {table} t{i} ON 
-                t1.event_time = t{i}.event_time AND
-                t1.event_type = t{i}.event_type AND
-                t1.product_id = t{i}.product_id AND
-                t1.price = t{i}.price AND
-                t1.user_id = t{i}.user_id AND
-                t1.user_session = t{i}.user_session
-            """
+        query += "\nUNION ALL\n".join(union_queries)
+        query += "\n) AS combined_data"
         
         cursor.execute(query)
         conn.commit()
-        print("Data from joined tables inserted into 'customers'")
+        print("Data from union of tables inserted into 'customers'")
     
     else:
         base_table = data_tables[0]
