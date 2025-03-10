@@ -1,6 +1,6 @@
 import pandas as pd
 import psycopg2
-from sqlalchemy import create_engine
+import sqlalchemy as db
 import sys
 from dotenv import load_dotenv
 import os
@@ -45,18 +45,40 @@ def find_db_params():
         'password': os.getenv('POSTGRES_PASSWORD')
     }
 
+def create_tabls(engine, table_name):
+    meta_data = db.MetaData()
+    
+    with engine.connect() as conn:
+        conn.execute(db.text(f"DROP TABLE IF EXISTS {table_name}"))
+        conn.commit()
+
+    table = db.Table(table_name, meta_data,
+            db.Column('event_time', db.DateTime, index=True),
+            db.Column('event_type', db.String(100)),
+            db.Column('product_id', db.Integer),
+            db.Column('price', db.Float),
+            db.Column('user_id', db.BigInteger),
+            db.Column('user_session', db.UUID))
+
+    meta_data.create_all(engine)
+    print(f"Table {table_name} have been crate with succes")
+
 def import_csv_to_db(path):
     try:
         df = load(path)
     except TypeError as e:
         print(e)
     db_params = find_db_params()
-    engine = create_engine(f"postgresql://{db_params['user']}:{db_params['password']}@{db_params['host']}/{db_params['database']}")
+    engine = db.create_engine(f"postgresql://{db_params['user']}:{db_params['password']}@{db_params['host']}/{db_params['database']}")
 
     try:
         db_name = path.split("/")[-1].split(".csv")[0]
         print(db_name)
-        df.to_sql(db_name, engine, if_exists='replace', index=False)
+        with engine.connect() as conn:
+            conn.execute(db.text(f"DROP TABLE IF EXISTS {db_name}"))
+            conn.commit()
+        create_tabls(engine, db_name)
+        df.to_sql(db_name, engine, if_exists='append', index=False)
         print("Import réussi dans la base de données")
     except Exception as e:
         print(f"Erreur lors de l'import : {e}")

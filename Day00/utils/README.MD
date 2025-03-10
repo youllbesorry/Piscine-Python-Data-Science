@@ -3,7 +3,7 @@
 
 ```bash
 # requirement : make execd (if psql not installed in your machine)
-psql -U ben -d piscineds -h localhost -W
+psql -U bfaure -d piscineds -h localhost -W
 ```
 
 ### Generate .env
