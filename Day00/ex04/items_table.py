@@ -50,7 +50,7 @@ def create_items_tabls(engine):
 
     items = db.Table('items', meta_data,
             db.Column('product_id', db.Integer, index=True),
-            db.Column('category_id', db.Float),
+            db.Column('category_id', db.BigInteger),
             db.Column('category_code', db.String(100)),
             db.Column('brand', db.String(50)))
 

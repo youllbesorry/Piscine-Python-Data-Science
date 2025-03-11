@@ -51,7 +51,7 @@ def load():
     """)
     
     table_exists = cursor.fetchone()[0]
-    
+        
     if not table_exists:
         base_table = data_tables[0]
         cursor.execute(f"""
