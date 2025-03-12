@@ -40,38 +40,29 @@ def remove_duplicates():
         start_time = time.time()
         
         cursor.execute("""
-            CREATE TEMPORARY TABLE temp_customers AS
-            WITH ranked_events AS (
-                SELECT *,
-                    LAG(event_time) OVER (
-                        PARTITION BY event_type, product_id, price, user_id, user_session
-                        ORDER BY event_time
-                    ) as prev_event_time
-                FROM customers
-            )
-            SELECT DISTINCT ON (
-                event_type, product_id, price, user_id, user_session, event_time
-            ) *
-            FROM customers c
-            WHERE NOT EXISTS (
-                SELECT 1
-                FROM customers c2
-                WHERE c2.event_type = c.event_type
-                AND c2.product_id = c.product_id
-                AND c2.price = c.price
-                AND c2.user_id = c.user_id
-                AND c2.user_session = c.user_session
-                AND c2.event_time != c.event_time
-                AND ABS(EXTRACT(EPOCH FROM c.event_time - c2.event_time)) <= 1
-            )
-            ORDER BY 
-                event_type, 
-                product_id, 
-                price, 
-                user_id, 
-                user_session,
-                event_time DESC;
-        """)
+                       CREATE TEMPORARY TABLE temp_customers (
+                        ID SERIAL PRIMARY KEY,
+                        event_time TIMESTAMP WITH TIME ZONE,
+                        event_type VARCHAR(255),
+                        product_id BIGINT,
+                        price FLOAT,
+                        user_id INT,
+                        user_session UUID
+                       )""")
+        
+        cursor.execute("""
+                        INSERT INTO temp_customers (event_time, event_type, product_id, price, user_id, user_session)
+                        SELECT DISTINCT ON (event_type, product_id, price, user_id, user_session, DATE_TRUNC('second', event_time))
+                            event_time, event_type, product_id, price, user_id, user_session
+                        FROM (
+                            SELECT *,
+                            LAG(event_time) OVER (PARTITION BY event_type, product_id, price, user_id, user_session ORDER BY event_time) as prev_event_time
+                            FROM customers
+                        )
+                        WHERE
+                            prev_event_time IS NULL OR
+                            event_time - prev_event_time > INTERVAL '1 second'
+                        """)
         
         print(f"Table temporaire créée en {time.time() - start_time:.2f} secondes")
         
@@ -83,8 +74,8 @@ def remove_duplicates():
         print("Réinsertion des données...")
         start_time = time.time()
         cursor.execute("""
-            INSERT INTO customers 
-            SELECT * FROM temp_customers
+            INSERT INTO customers (event_time, event_type, product_id, price, user_id, user_session)
+            SELECT event_time, event_type, product_id, price, user_id, user_session FROM temp_customers
         """)
         print(f"Réinsertion terminée en {time.time() - start_time:.2f} secondes")
         
