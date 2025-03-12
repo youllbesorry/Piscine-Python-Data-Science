@@ -67,6 +67,7 @@ def extract_data(cursor):
                     FROM customers
                     WHERE event_type = 'purchase' 
                         AND price IS NOT NULL
+                        AND user_id IS NOT NULL
                     GROUP BY DATE(event_time)
                     ORDER BY date;
                    """)
@@ -99,9 +100,11 @@ def total_sales_chart(df):
     plt.show()
     
 def average_spend_customers(df):
-    plt.plot(df['date'], df['average_spend'])
+    plt.fill_between(df['date'], df['average_spend'], color='lightsteelblue')
+    plt.plot(df['date'], df['average_spend'], color='lightsteelblue')
     
     plt.xlim([datetime(2022, 10, 1), datetime(2023, 1, 31)])
+    plt.ylim(bottom=0)
     plt.gca().xaxis.set_major_locator(mdates.MonthLocator())
     plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b'))
     plt.ylabel("average spend/customers in ₳")
@@ -112,8 +115,8 @@ def main():
     conn = connect_to_db_psycopg()
     cursor = conn.cursor()
     df1, df2, df3 = extract_data(cursor)
-    # nb_customers_chart(df1)
-    # total_sales_chart(df2)
+    nb_customers_chart(df1)
+    total_sales_chart(df2)
     average_spend_customers(df3)
     
 if __name__ == "__main__":
