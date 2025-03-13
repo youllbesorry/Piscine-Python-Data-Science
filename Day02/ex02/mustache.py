@@ -42,14 +42,25 @@ def extract_data(cursor):
     rows = cursor.fetchall()
     column_names = [desc[0] for desc in cursor.description]
     df = pd.DataFrame(rows, columns=column_names)
-    print(df.head())
     cursor.execute("""
                     SELECT COUNT(event_type) FROM customers
                     WHERE event_type = 'purchase'
                         AND event_type IS NOT NULL
                 """)
     count = cursor.fetchall()
-    return df, count
+    
+    cursor.execute("""
+                    SELECT user_id, AVG(price) as avg_price 
+                    FROM customers
+                    WHERE event_type = 'purchase'
+                        AND event_type IS NOT NULL
+                    GROUP BY user_id
+                """)
+    user_rows = cursor.fetchall()
+    user_columns = [desc[0] for desc in cursor.description]
+    user_df = pd.DataFrame(user_rows, columns=user_columns)
+    
+    return df, count, user_df
 
 def transform_data(df, count):
     statistiques = {
@@ -65,14 +76,47 @@ def transform_data(df, count):
     
     for nom, valeur in statistiques.items():
         print(f"{nom}: {valeur:.2f}")
+
+def box_plot(df):
+    plt.grid(True, alpha=0.3)
+    plt.boxplot(df['price'].tolist(), vert=False, patch_artist=True,
+               boxprops=dict(facecolor='lightgreen'), widths=0.7)
+    plt.xlabel('price')
+    plt.yticks([])
+    plt.show()
+
+def zoom_box_plot(df):
+    plt.grid(True, alpha=0.3)
+    plt.boxplot(df['price'].tolist(), vert=False, patch_artist=True,
+               boxprops=dict(facecolor='lightgreen'), widths=0.7)
+    plt.xlim(-1, 13)
     
-    return statistiques
+    plt.xlabel('price')
+    plt.yticks([])
+    plt.tight_layout()
+    plt.show()
+
+def user_basket_box_plot(user_df):
+    plt.boxplot(user_df['avg_price'].tolist(), vert=False, patch_artist=True,
+               boxprops=dict(facecolor='lightblue'), widths=0.7)
+    plt.grid(True, alpha=0.3)
+    plt.yticks([])
+    plt.tight_layout()
+    plt.show()
 
 def main():
-    conn = connect_to_db_psycopg()
+    try:
+        conn = connect_to_db_psycopg()
+    except Exception as e:
+        print(e)
     cursor = conn.cursor()
-    df, count = extract_data(cursor)
+    df, count, user_df = extract_data(cursor)
     transform_data(df, count)
+    box_plot(df)
+    zoom_box_plot(df)
+    user_basket_box_plot(user_df)
+    cursor.close()
+    conn.close()
 
 if __name__ == "__main__":
     main()
