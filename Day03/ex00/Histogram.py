@@ -63,20 +63,12 @@ def visualizer_test(df):
     plt.show()
 
 def visualizer_train(df):
-    """
-    Crée des histogrammes pour comparer les distributions entre Jedi et Sith.
-    
-    Args:
-        df: DataFrame des chevaliers d'entraînement
-    """
     if df is None or df.empty:
         print("Erreur : DataFrame vide ou invalide")
         return
 
-    # Afficher les noms des colonnes pour debug
     print("Colonnes disponibles:", df.columns.tolist())
 
-    # Sélectionner uniquement les colonnes numériques
     numeric_columns = df.select_dtypes(include=[np.number]).columns
     
     if len(numeric_columns) == 0:
@@ -91,9 +83,8 @@ def visualizer_train(df):
     for idx, column in enumerate(numeric_columns, 1):
         plt.subplot(n_rows, n_cols, idx)
         
-        # Tracer les histogrammes séparés pour Jedi et Sith
-        jedi_data = df[df['knight'] == 'Jedi'][column].dropna()  # 'Class' au lieu de 'class'
-        sith_data = df[df['knight'] == 'Sith'][column].dropna()  # 'Class' au lieu de 'class'
+        jedi_data = df[df['knight'] == 'Jedi'][column].dropna()
+        sith_data = df[df['knight'] == 'Sith'][column].dropna()
         
         plt.hist(jedi_data, bins=50, alpha=0.5, 
                 label='Jedi', edgecolor='black', color='blue')
