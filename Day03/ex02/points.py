@@ -79,7 +79,7 @@ def visualize_mix(data, feature_x, feature_y, title, is_classification=True):
         ax.scatter(sith[feature_x], sith[feature_y], 
                    color='red', label='Sith', alpha=0.7)
     else:
-        scatter = ax.scatter(data[feature_x], data[feature_y],
+        ax.scatter(data[feature_x], data[feature_y],
                             color='green', alpha=0.7)
     
     ax.set_xlabel(feature_x)

@@ -33,23 +33,21 @@ def load(path: str) -> pd.DataFrame:
         print(e)
         return None
 
-def standardization(data):
+def normalization(data):
     if not isinstance(data, np.ndarray):
         return None
     
-    # Calcul de la moyenne pour chaque caractéristique
-    mean = np.mean(data, axis=0)
-    
-    # Calcul de l'écart-type pour chaque caractéristique
-    std = np.std(data, axis=0)
+    # Calcul du min et max pour chaque colonne
+    min_vals = np.min(data, axis=0)
+    max_vals = np.max(data, axis=0)
     
     # Éviter la division par zéro
-    std = np.where(std == 0, 1, std)
+    range_vals = np.where(max_vals - min_vals == 0, 1, max_vals - min_vals)
     
-    # Standardisation : (x - moyenne) / écart-type
-    standardized_data = (data - mean) / std
+    # Normalisation : (x - min) / (max - min)
+    normalized_data = (data - min_vals) / range_vals
     
-    return standardized_data
+    return normalized_data
 
 def visualize_separate(data, feature_x, feature_y, title, is_classification=True):
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -110,8 +108,8 @@ def main():
     test_numeric = transform_test_data[numeric_columns].to_numpy()
     train_numeric = transform_train_data[numeric_columns].to_numpy()
     
-    standar_test_data = standardization(test_numeric)
-    standar_train_data = standardization(train_numeric)
+    standar_test_data = normalization(test_numeric)
+    standar_train_data = normalization(train_numeric)
     
     # Créer les nouveaux DataFrames avec les données standardisées
     standar_test_df = pd.DataFrame(standar_test_data, columns=numeric_columns)
@@ -126,6 +124,8 @@ def main():
 
     visualize_separate(standar_train_df, 'Empowered', 'Prescience', "Train Data")
     visualize_separate(standar_test_df, 'Empowered', 'Prescience', "Test Data")
+    visualize_separate(standar_train_df, 'Deflection', 'Survival', "Test Data")
+    visualize_separate(standar_test_df, 'Deflection', 'Survival', "Test Data")
 
 
 if __name__ == "__main__":
