@@ -7,7 +7,7 @@ def load(path: str):
     try:
         if (type(path) is not str):
             raise TypeError("The path must be an str")
-        data = pd.read_fwf(path)
+        data = open(path, 'r').read().splitlines()
         return data
     except (UnicodeDecodeError, FileNotFoundError, TypeError) as e:
         print(e)
@@ -16,13 +16,8 @@ def load(path: str):
     
 def transform_data(data):
     try:
-        # Récupérer la première colonne et réinitialiser l'index à partir de 1
-        column = data.iloc[:, 0].reset_index(drop=True)
-        # Ajouter 1 à l'index pour commencer à 1
-        column.index = column.index + 1
-        # Transformer les valeurs
-        transform = column.map({'Jedi': 1, 'Sith': 0})
-        return transform.tolist()
+        transform = [1 if x == 'Jedi' else 0 for x in data]
+        return transform
     except Exception as e:
         print(f"Erreur de transformation : {e}")
         return None
@@ -32,13 +27,12 @@ def calculate_confusion_matrix(t_value, p_value):
         print("Les listes n'ont pas la même longueur")
         return None
         
-    TP = 0  # True Positive (Jedi correctement identifié)
-    TN = 0  # True Negative (Sith correctement identifié)
-    FP = 0  # False Positive (Sith identifié comme Jedi)
-    FN = 0  # False Negative (Jedi identifié comme Sith)
+    TP = 0
+    TN = 0
+    FP = 0
+    FN = 0
 
-    # Commencer à partir de l'index 1
-    for i in range(-1, len(t_value)):
+    for i in range(len(t_value)):
         if t_value[i] == 1 and p_value[i] == 1:
             TP += 1
         elif t_value[i] == 0 and p_value[i] == 0:
@@ -54,23 +48,27 @@ def calculate_metrics(confusion_matrix):
     [[TN, FP], [FN, TP]] = confusion_matrix
 
     accuracy = (TP + TN) / (TP + TN + FP + FN)
-    precision = TP / (TP + FP) if (TP + FP) > 0 else 0
-    recall = TP / (TP + FN) if (TP + FN) > 0 else 0
-    f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
 
-    return accuracy, precision, recall, f1
+    jedi_precision = TP / (TP + FP)
+    sith_precision = TN / (TN + FN)
+
+    jedi_recall = TP / (TP + FN)
+    sith_recall = TN / (TN + FP)
+
+    jedi_f1 = 2 * (jedi_precision * jedi_recall) / (jedi_precision + jedi_recall)
+    sith_f1 = 2 * (sith_precision * sith_recall) / (sith_precision + sith_recall)
+
+    return accuracy, jedi_precision, sith_precision, jedi_recall, sith_recall, jedi_f1, sith_f1
 
 def display_confusion_matrix(matrix):
     [[TN, FP], [FN, TP]] = matrix
-    accuracy, precision, recall, f1 = calculate_metrics(matrix)
+    accuracy, jedi_precision, sith_precision, jedi_recall, sith_recall, jedi_f1, sith_f1 = calculate_metrics(matrix)
     
-    # Affichage des métriques au format demandé
     print("              precision    recall  f1-score    total")
-    print(f"Jedi          {precision:.2f}         {recall:.2f}    {f1:.2f}       {TP + FN}")
-    print(f"Sith          {precision:.2f}         {recall:.2f}    {f1:.2f}       {TN + FP}")
+    print(f"Jedi          {jedi_precision:.2f}         {jedi_recall:.2f}    {jedi_f1:.2f}       {TP + FN}")
+    print(f"Sith          {sith_precision:.2f}         {sith_recall:.2f}    {sith_f1:.2f}       {TN + FP}")
     print(f"accuracy                           {accuracy:.2f}       {TP + TN + FP + FN}")
     
-    # Affichage de la matrice
     print(f"{matrix}")
 
 def main():
@@ -78,22 +76,17 @@ def main():
         print("You must at least enter 2 path")
         return
     
-    true_value = transform_data(load(sys.argv[1]))
-    predicted_value = transform_data(load(sys.argv[2]))
-
-    print(true_value)
-    print(predicted_value)
+    predicted_value = transform_data(load(sys.argv[1]))
+    true_value = transform_data(load(sys.argv[2]))
 
     if true_value is not None and predicted_value is not None:
         matrix = calculate_confusion_matrix(true_value, predicted_value)
         display_confusion_matrix(matrix)
         
-        # Ajout de la visualisation avec matplotlib
         plt.figure(figsize=(8, 6))
         plt.imshow(matrix, cmap='YlOrRd')
         plt.colorbar()
         
-        # Ajout des valeurs dans les cellules
         for i in range(2):
             for j in range(2):
                 plt.text(j, i, str(matrix[i][j]), 

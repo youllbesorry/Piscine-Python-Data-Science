@@ -37,14 +37,11 @@ def normalization(data):
     if not isinstance(data, np.ndarray):
         return None
     
-    # Calcul du min et max pour chaque colonne
     min_vals = np.min(data, axis=0)
     max_vals = np.max(data, axis=0)
     
-    # Éviter la division par zéro
     range_vals = np.where(max_vals - min_vals == 0, 1, max_vals - min_vals)
     
-    # Normalisation : (x - min) / (max - min)
     normalized_data = (data - min_vals) / range_vals
     
     return normalized_data
@@ -52,9 +49,7 @@ def normalization(data):
 def visualize_separate(data, feature_x, feature_y, title, is_classification=True):
     fig, ax = plt.subplots(figsize=(10, 6))
     
-    # Vérifier si la colonne 'knight' existe dans le DataFrame
     if is_classification and ('knight' in data.columns):
-        # Séparer les données en fonction de la valeur de 'knight'
         jedi = data[data['knight'] == 1]
         sith = data[data['knight'] == 0]
         
@@ -81,27 +76,21 @@ def transform_data(data):
     
     if 'knight' in transformed.columns:
         transformed['knight'] = transformed['knight'].map({'Jedi': 1, 'Sith': 0})
-        print("Data transform")
     
     return transformed
 
 def main():
-    # Charger les données
     test_df = load("../Test_knight.csv")
     train_df = load("../Train_knight.csv")
     
     if test_df is None or train_df is None:
         return
     
-    # Transformer d'abord les données (convertir 'knight' en 0/1)
     transform_test_data = transform_data(test_df)
     transform_train_data = transform_data(train_df)
 
-    # Séparer la colonne 'knight' avant la standardisation
-    # knight_test = transform_test_data['knight']
     knight_train = transform_train_data['knight']
     
-    # Standardiser les données numériques (sans la colonne 'knight')
     numeric_columns = transform_test_data.select_dtypes(include=['float64', 'int64']).columns
     numeric_columns = numeric_columns.drop('knight') if 'knight' in numeric_columns else numeric_columns
     
@@ -111,16 +100,13 @@ def main():
     standar_test_data = normalization(test_numeric)
     standar_train_data = normalization(train_numeric)
     
-    # Créer les nouveaux DataFrames avec les données standardisées
     standar_test_df = pd.DataFrame(standar_test_data, columns=numeric_columns)
     standar_train_df = pd.DataFrame(standar_train_data, columns=numeric_columns)
     
-    # Rajouter la colonne 'knight'
-    # standar_test_df['knight'] = knight_test
     standar_train_df['knight'] = knight_train
 
-    print("Test data standardisé :", standar_test_df)
-    print("\nTrain data standardisé :", standar_train_df)
+    print(standar_test_df)
+    print(standar_train_df)
 
     visualize_separate(standar_train_df, 'Empowered', 'Prescience', "Train Data")
     visualize_separate(standar_test_df, 'Empowered', 'Prescience', "Test Data")

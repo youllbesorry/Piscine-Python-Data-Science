@@ -51,7 +51,7 @@ def visualizer_test(df):
     
     for idx, column in enumerate(numeric_columns, 1):
         plt.subplot(n_rows, n_cols, idx)
-        plt.hist(df[column].dropna(), bins=50, edgecolor='black', color='green')
+        plt.hist(df[column].dropna(), bins=50, color='green')
         plt.title(column)
         plt.ylabel('Fréquence')
     
@@ -66,9 +66,7 @@ def visualizer_train(df):
     if df is None or df.empty:
         print("Erreur : DataFrame vide ou invalide")
         return
-
-    print("Colonnes disponibles:", df.columns.tolist())
-
+    
     numeric_columns = df.select_dtypes(include=[np.number]).columns
     
     if len(numeric_columns) == 0:
@@ -87,9 +85,9 @@ def visualizer_train(df):
         sith_data = df[df['knight'] == 'Sith'][column].dropna()
         
         plt.hist(jedi_data, bins=50, alpha=0.5, 
-                label='Jedi', edgecolor='black', color='blue')
+                label='Jedi', color='blue')
         plt.hist(sith_data, bins=50, alpha=0.5, 
-                label='Sith', edgecolor='black', color='red')
+                label='Sith', color='red')
         
         plt.title(column)
         plt.ylabel('Fréquence')

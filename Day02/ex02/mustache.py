@@ -48,14 +48,23 @@ def extract_data(cursor):
                         AND event_type IS NOT NULL
                 """)
     count = cursor.fetchall()
-    
+
     cursor.execute("""
-                    SELECT user_id, AVG(price) as avg_price 
-                    FROM customers
-                    WHERE event_type = 'purchase'
-                        AND event_type IS NOT NULL
-                    GROUP BY user_id
-                """)
+                    WITH user_baskets AS (
+                        SELECT
+                            SUM(price) as basket_tot,
+                            user_id,
+                            event_time
+                        from customers
+                        WHERE event_type = 'purchase'
+                        GROUP BY user_id, event_time
+                    )
+                    SELECT
+                        AVG(basket_tot) as avg_price
+                    FROM user_baskets
+                    GROUP BY user_id;
+                   """)
+    
     user_rows = cursor.fetchall()
     user_columns = [desc[0] for desc in cursor.description]
     user_df = pd.DataFrame(user_rows, columns=user_columns)
@@ -102,6 +111,7 @@ def user_basket_box_plot(user_df):
     plt.grid(True, alpha=0.3)
     plt.yticks([])
     plt.tight_layout()
+    plt.xlim(0, 120)
     plt.show()
 
 def main():
