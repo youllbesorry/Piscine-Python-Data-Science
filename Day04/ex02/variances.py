@@ -9,14 +9,14 @@ def calculate_variance(dataset):
     dataset['knight'] = dataset['knight'].map({'Jedi': 1, 'Sith': 0})
     scaler = StandardScaler()
     scaled_data = scaler.fit_transform(dataset)
-    
+
     pca = PCA()
     pca.fit(scaled_data)
-    
+
     explained_variance_ratio = pca.explained_variance_ratio_
-    
+
     cumulative_variance = np.cumsum(explained_variance_ratio) * 100
-    
+
     n_components_90 = np.argmax(cumulative_variance >= 90) + 1
     
     plt.figure(figsize=(10, 6))

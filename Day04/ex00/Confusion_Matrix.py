@@ -22,11 +22,7 @@ def transform_data(data):
         print(f"Erreur de transformation : {e}")
         return None
     
-def calculate_confusion_matrix(t_value, p_value):
-    if len(t_value) != len(p_value):
-        print("Les listes n'ont pas la même longueur")
-        return None
-        
+def calculate_confusion_matrix(t_value, p_value):    
     TP = 0
     TN = 0
     FP = 0

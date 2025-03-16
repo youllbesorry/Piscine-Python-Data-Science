@@ -5,18 +5,18 @@ from sklearn.preprocessing import StandardScaler
 
 def calculate_vif(data):
     data_copy = data.copy()
-    
+
     X = data_copy.drop('knight', axis=1)
-    
+
     scaler = StandardScaler()
     X_scaled = pd.DataFrame(scaler.fit_transform(X), columns=X.columns)
-    
+
     vif_tolerance = pd.DataFrame()
     vif_tolerance["Variable"] = X_scaled.columns
     vif_tolerance["VIF"] = [variance_inflation_factor(X_scaled.values, i) 
                            for i in range(X_scaled.shape[1])]
     vif_tolerance["Tolérance"] = 1 / vif_tolerance["VIF"]
-    
+
     vif_tolerance = vif_tolerance.sort_values('VIF', ascending=False)
     return vif_tolerance
 
